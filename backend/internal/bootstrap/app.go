@@ -1,9 +1,11 @@
 package bootstrap
 
 import (
+	"fmt"
 	"log"
 
 	"workshop-registration/backend/internal/adapter/storage/postgres"
+	"workshop-registration/backend/internal/adapter/storage/postgres/models"
 	"workshop-registration/backend/internal/config"
 
 	"gorm.io/gorm"
@@ -29,6 +31,22 @@ func NewApp() (*App, error) {
 	}
 
 	log.Println("Database connection successful")
+
+	err = db.AutoMigrate(
+		&models.UserModel{},
+		&models.WorkshopModel{},
+		&models.RegistrationModel{},
+	)
+
+	if err != nil {
+		sqlDB, sqlErr := db.DB()
+		if sqlErr != nil {
+			_ = sqlDB.Close()
+		}
+		return nil, fmt.Errorf(
+			"migration failed: %w", err,
+		)
+	}
 
 	return &App{
 		Config: cfg,
