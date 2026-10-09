@@ -6,6 +6,7 @@ import (
 
 	"workshop-registration/backend/internal/adapter/storage/postgres"
 	"workshop-registration/backend/internal/adapter/storage/postgres/models"
+	"workshop-registration/backend/internal/adapter/storage/postgres/repository"
 	"workshop-registration/backend/internal/config"
 	"workshop-registration/backend/internal/core/service"
 
@@ -13,9 +14,11 @@ import (
 )
 
 type App struct {
-	Config      *config.Config
-	DB          *gorm.DB
-	AuthService *service.AuthService
+	Config              *config.Config
+	DB                  *gorm.DB
+	AuthService         *service.AuthService
+	WorkshopService     *service.WorkshopService
+	RegistrationService *service.RegistrationService
 }
 
 func NewApp() (*App, error) {
@@ -48,11 +51,19 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("admin seeding failed: %w", err)
 	}
 
-	log.Println("Database initialized successfully")
+	log.Println("Database initialized successful")
+
+	workshopRepo := repository.NewWorkshopRepository(db)
+
+	workshopService := service.NewWorkshopService(workshopRepo)
+
+	registrationService := service.NewRegistrationService(db)
 
 	return &App{
-		Config:      cfg,
-		DB:          db,
-		AuthService: service.NewAuthService(db, cfg.JWTSecret),
+		Config:              cfg,
+		DB:                  db,
+		AuthService:         service.NewAuthService(db, cfg.JWTSecret),
+		WorkshopService:     workshopService,
+		RegistrationService: registrationService,
 	}, nil
 }
